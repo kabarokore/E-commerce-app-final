@@ -2,6 +2,8 @@
 
 A modern e-commerce platform built with Spring Boot and Thymeleaf.
 
+Deployment link:http://167.71.98.199/
+
 ## Project Overview
 
 This application is a full-featured e-commerce solution that provides:
