@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/layout :: head('Error')}">
+    <title>Error</title>
+  </head>
+  <body>
+    <div th:replace="~{fragments/layout :: navbar}"></div>
+    <div
+      th:replace="~{fragments/layout :: page-title('An Error Occurred')}"
+    ></div>
+
+    <div class="container my-5">
+      <div class="error-container">
+        <div class="error-icon">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <h2 class="error-title">Something went wrong</h2>
+        <p
+          class="error-message"
+          th:text="${error ?: 'An unexpected error occurred.'}"
+        >
+          Error details will appear here.
+        </p>
+        <div class="error-actions">
+          <a href="/" class="btn btn-primary">
+            <i class="fas fa-home"></i> Back to Home
+          </a>
+          <a href="javascript:history.back()" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Go Back
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div th:replace="~{fragments/layout :: footer}"></div>
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+  </body>
+</html>

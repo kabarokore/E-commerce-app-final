@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head th:replace="~{fragments/layout :: head('Your Wishlist')}">
+    <title>Your Wishlist | The Daily Grind</title>
+    <!-- Using global CSS instead of page-specific CSS since the head fragment doesn't support links parameter -->
+  </head>
+
+  <body>
+    <!-- Include custom CSS for wishlist animations -->
+    <link rel="stylesheet" th:href="@{/css/wishlist-animations.css}" />
+    
+    <!-- Include the counter-unified.js script -->
+    <script th:src="@{/js/counter-unified.js}"></script>
+
+    <div th:replace="~{fragments/layout :: navbar}"></div>
+    <div th:replace="~{fragments/layout :: page-title('Your Wishlist')}"></div>
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+
+    <!-- Wishlist Section -->
+    <section class="wishlist-section">
+      <!-- Dynamic Wishlist Items Container -->
+      <div class="wishlist-container">
+        <div class="wishlist-items-container"></div>
+      </div>
+
+      <script th:inline="javascript">
+        /*<![CDATA[*/
+        var username = /*[[${sessionUsername}]]*/ "";
+        /*]]>*/
+        
+        // Utility function to prevent function from being called too frequently
+        function throttle(func, limit) {
+          let inThrottle;
+          return function() {
+            const args = arguments;
+            const context = this;
+            if (!inThrottle) {
+              func.apply(context, args);
+              inThrottle = true;
+              setTimeout(() => inThrottle = false, limit);
+            }
+          };
+        }
+        
+        // Utility to debounce rapidly fired events
+        function debounce(func, wait) {
+          let timeout;
+          return function() {
+            const context = this;
+            const args = arguments;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(context, args), wait);
+          };
+        }
+        
+        // Track operations in progress to prevent duplicates
+        const operationsInProgress = new Set();
+        
+        function isOperationInProgress(operationType, id) {
+          const key = `${operationType}-${id}`;
+          if (operationsInProgress.has(key)) {
+            return true;
+          }
+          operationsInProgress.add(key);
+          return false;
+        }
+        
+        function completeOperation(operationType, id) {
+          const key = `${operationType}-${id}`;
+          operationsInProgress.delete(key);
+        }
+
+        function fetchWishlistWithSessionFallback() {
+          if (!username) {
+            username = localStorage.getItem("username");
+          }
+          if (!username) {
+            // Try to get from session via API
+            fetch("/api/session-username")
+              .then((res) => res.json())
+              .then((data) => {
+                if (data.username) {
+                  username = data.username;
+                  localStorage.setItem("username", username);
+                  loadWishlist(username);
+                } else {
+                  showWishlistLoginError();
+                }
+              })
+              .catch(showWishlistLoginError);
+            return;
+          }
+          loadWishlist(username);
+        }
+
+        function showWishlistLoginError() {
+          const container = document.querySelector(".wishlist-items-container");
+          if (container) {
+            container.innerHTML = `<div class='wishlist-error'>
+              <ion-icon name='person-circle-outline'></ion-icon>
+              <p>Could not determine your username. Please <a href='/auth/login'>log in</a> again.</p>
+            </div>`;
+          }
+        }
+
+        // Track loading state to prevent multiple concurrent requests
+        let isWishlistLoading = false;
+        
+        function loadWishlist(username) {
+          const container = document.querySelector(".wishlist-items-container");
+          if (!container) return;
+          
+          // Prevent multiple simultaneous loading requests
+          if (isWishlistLoading) {
+            console.log("Wishlist loading already in progress, skipping duplicate request");
+            return;
+          }
+          
+          isWishlistLoading = true;
+          
+          console.log("Username used for wishlist fetch:", username);
+          container.innerHTML =
+            '<div class="loading-spinner">Loading your wishlist...</div>';
+
+          // Use AbortController to be able to cancel the request if needed
+          const controller = new AbortController();
+          const signal = controller.signal;
+          
+          // Set timeout to cancel request if it takes too long
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
+          
+          fetch(`/api/wishlist?username=${encodeURIComponent(username)}`, { signal })
+            .then((res) => res.json())
+            .then((data) => {
+              console.log("API response for wishlist:", data);
+              if (
+                !data.success ||
+                !data.data ||
+                !Array.isArray(data.data.items) ||
+                data.data.items.length === 0
+              ) {
+                container.innerHTML = `
+                  <div class='wishlist-empty'>
+                    <div class='wishlist-empty-icon'><ion-icon name='heart-outline'></ion-icon></div>
+                    <h3 class='wishlist-empty-title'>Your wishlist is empty</h3>
+                    <p class='wishlist-empty-text'>Add items you want to save for future purchases.</p>
+                    <a href='/products' class='btn-browse'>Browse Products</a>
+                  </div>
+                `;
+                return;
+              }
+
+              // Sort by newest first based on addedAt date
+              const sortedItems = [...data.data.items].sort((a, b) => {
+                if (!a.addedAt) return 1;
+                if (!b.addedAt) return -1;
+                return new Date(b.addedAt) - new Date(a.addedAt);
+              });
+
+              const now = new Date();
+              const isNew = (date) => {
+                if (!date) return false;
+                const itemDate = new Date(date);
+                // Consider "new" if added within the last 2 days
+                return (now - itemDate) / (1000 * 60 * 60 * 24) < 2;
+              };
+
+              const wishlistHtml = `
+                <div class="wishlist-header">
+                  <h2 class="wishlist-title">Your Wishlist</h2>
+                  <span class="wishlist-count">${
+                    sortedItems.length
+                  } items</span>
+                </div>
+                
+                <div class="wishlist-grid">
+                  ${sortedItems
+                    .map(
+                      (item) => `
+                    <div class="wishlist-card" data-product-id="${
+                      item.productId
+                    }">
+                      <div class="wishlist-card-image">
+                        ${
+                          isNew(item.addedAt)
+                            ? '<span class="badge-new">NEW</span>'
+                            : ""
+                        }
+                        <img src="${item.imageUrl}" alt="${item.name}" />
+                      </div>
+                      <div class="wishlist-card-body">
+                        <h3 class="wishlist-card-name">
+                          <a href="/products/${item.productId}">${item.name}</a>
+                        </h3>
+                        <div class="wishlist-card-price">
+                          $${item.price}
+                          ${
+                            item.salePrice
+                              ? `<span class="wishlist-card-sale">$${item.salePrice}</span>`
+                              : ""
+                          }
+                        </div>
+                        <div class="wishlist-card-date">
+                          Added on ${
+                            item.addedAt
+                              ? new Date(item.addedAt).toLocaleDateString()
+                              : "Unknown date"
+                          }
+                        </div>
+                        <div class="wishlist-card-actions">
+                          <button class="btn-add-cart" data-cart-action="add" data-product-id="${
+                            item.productId
+                          }">
+                            <ion-icon name="cart-outline"></ion-icon> Add to Cart
+                          </button>
+                          <button class="btn-remove" data-wishlist-action="remove" data-product-id="${
+                            item.productId
+                          }" title="Remove">
+                            <ion-icon name="trash-outline"></ion-icon>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  `
+                    )
+                    .join("")}
+                </div>
+              `;
+
+              container.innerHTML = wishlistHtml;
+
+              // Setup event delegation for wishlist items container
+              const wishlistContainer = document.querySelector(
+                ".wishlist-items-container"
+              );
+              if (wishlistContainer) {
+                wishlistContainer.addEventListener("click", function (e) {
+                  // Handle Add to Cart button
+                  if (e.target.closest('[data-cart-action="add"]')) {
+                    const button = e.target.closest('[data-cart-action="add"]');
+                    const productId = button.getAttribute("data-product-id");
+                    if (productId) {
+                      e.preventDefault();
+                      addToCart(productId);
+                    }
+                  }
+
+                  // Handle Remove from Wishlist button
+                  if (e.target.closest('[data-wishlist-action="remove"]')) {
+                    const button = e.target.closest(
+                      '[data-wishlist-action="remove"]'
+                    );
+                    const productId = button.getAttribute("data-product-id");
+                    if (productId) {
+                      e.preventDefault();
+                      removeFromWishlist(productId);
+                    }
+                  }
+                });
+              }
+            })
+            .catch((error) => {
+              console.error("Error loading wishlist:", error);
+              
+              // Only show error if it's not an abort error (which we triggered intentionally)
+              if (error.name !== 'AbortError') {
+                container.innerHTML = `
+                  <div class='wishlist-error'>
+                    <ion-icon name='alert-circle-outline'></ion-icon>
+                    <p>Failed to load your wishlist. Please try again later.</p>
+                    <button class='retry-btn' onclick='loadWishlist(username)'>Retry</button>
+                  </div>
+                `;
+              }
+            })
+            .finally(() => {
+              // Clear timeout and reset loading state
+              clearTimeout(timeoutId);
+              isWishlistLoading = false;
+            });
+        }
+
+        // Throttled version of addToCart to prevent multiple rapid calls
+        const throttledAddToCart = throttle(function(productId) {
+          addToCart(productId);
+        }, 1000);
+        
+        function addToCart(productId) {
+          // Prevent duplicate operations
+          if (isOperationInProgress('cart-add', productId)) {
+            console.log(`Add to cart operation already in progress for product ${productId}`);
+            return;
+          }
+          
+          // Find the button and show visual feedback
+          const button = document.querySelector(`.btn-add-cart[data-product-id="${productId}"]`);
+          if (button) {
+            // Disable button temporarily to prevent multiple clicks
+            button.disabled = true;
+            const originalText = button.innerHTML;
+            button.innerHTML = '<ion-icon name="hourglass-outline"></ion-icon> Adding...';
+          }
+          
+          fetch("/cart/add", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRF-TOKEN": document
+                .querySelector('meta[name="_csrf"]')
+                ?.getAttribute("content"),
+            },
+            body: JSON.stringify({ productId, quantity: 1 }),
+          })
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error(`Server responded with status: ${response.status}`);
+              }
+              return response.json();
+            })
+            .then((data) => {
+              if (data.success) {
+                // Show success UI feedback
+                if (button) {
+                  button.innerHTML = '<ion-icon name="checkmark-outline"></ion-icon> Added';
+                  setTimeout(() => {
+                    button.innerHTML = '<ion-icon name="cart-outline"></ion-icon> Add to Cart';
+                    button.disabled = false;
+                  }, 1500);
+                }
+                
+                showToast("Success", "Item added to cart!", "success");
+                
+                // Update cart count using unified counter system
+                if (data.cartCount !== undefined) {
+                  if (typeof window.updateCartCounter === "function") {
+                    window.updateCartCounter(data.cartCount);
+                  } else if (typeof updateCartCount === "function") {
+                    updateCartCount(data.cartCount);
+                  }
+                }
+              } else {
+                // Reset button state
+                if (button) {
+                  button.innerHTML = '<ion-icon name="cart-outline"></ion-icon> Add to Cart';
+                  button.disabled = false;
+                }
+                
+                showToast(
+                  "Error",
+                  data.message || "Failed to add item to cart",
+                  "error"
+                );
+              }
+            })
+            .catch((error) => {
+              console.error("Error adding to cart:", error);
+              
+              // Reset button state in case of error
+              const button = document.querySelector(`.btn-add-cart[data-product-id="${productId}"]`);
+              if (button) {
+                button.innerHTML = '<ion-icon name="cart-outline"></ion-icon> Add to Cart';
+                button.disabled = false;
+              }
+              
+              showToast("Error", "Failed to add item to cart", "error");
+            })
+            .finally(() => {
+              // Mark operation as complete
+              completeOperation('cart-add', productId);
+            });
+        }
+
+        function removeFromWishlist(productId) {
+          // Show removal animation first for immediate visual feedback
+          const itemCard = document.querySelector(`.wishlist-card[data-product-id="${productId}"]`);
+          if (itemCard) {
+            itemCard.style.transition = "opacity 0.3s, transform 0.3s";
+            itemCard.style.opacity = "0.5";
+            itemCard.style.transform = "scale(0.95)";
+          }
+          
+          fetch("/wishlist/remove", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRF-TOKEN": document
+                .querySelector('meta[name="_csrf"]')
+                ?.getAttribute("content"),
+            },
+            body: JSON.stringify({ productId }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                // Only remove the specific item from DOM instead of reloading entire wishlist
+                if (itemCard) {
+                  itemCard.style.opacity = "0";
+                  itemCard.style.transform = "scale(0.9)";
+                  
+                  // Remove the item from DOM after animation completes
+                  setTimeout(() => {
+                    itemCard.remove();
+                    
+                    // Check if wishlist is empty and show empty state if needed
+                    const remainingItems = document.querySelectorAll('.wishlist-card');
+                    if (remainingItems.length === 0) {
+                      const container = document.querySelector(".wishlist-items-container");
+                      if (container) {
+                        container.innerHTML = `
+                          <div class='wishlist-empty'>
+                            <div class='wishlist-empty-icon'><ion-icon name='heart-outline'></ion-icon></div>
+                            <h3 class='wishlist-empty-title'>Your wishlist is empty</h3>
+                            <p class='wishlist-empty-text'>Add items you want to save for future purchases.</p>
+                            <a href='/products' class='btn-browse'>Browse Products</a>
+                          </div>
+                        `;
+                      }
+                    } else {
+                      // Update the count display
+                      const countDisplay = document.querySelector('.wishlist-count');
+                      if (countDisplay) {
+                        countDisplay.textContent = `${remainingItems.length} items`;
+                      }
+                    }
+                  }, 300);
+                }
+                
+                showToast("Success", "Item removed from wishlist", "success");
+
+                // Update wishlist count using unified counter system
+                if (data.wishlistCount !== undefined) {
+                  if (typeof window.updateWishlistCounter === "function") {
+                    window.updateWishlistCounter(data.wishlistCount);
+                  } else if (typeof updateWishlistCount === "function") {
+                    updateWishlistCount(data.wishlistCount);
+                  }
+                }
+              } else {
+                // Reset the item card if removal failed
+                if (itemCard) {
+                  itemCard.style.opacity = "1";
+                  itemCard.style.transform = "scale(1)";
+                }
+                
+                showToast(
+                  "Error",
+                  data.message || "Failed to remove item",
+                  "error"
+                );
+              }
+            })
+            .catch((error) => {
+              console.error("Error removing from wishlist:", error);
+              
+              // Reset animation if error occurs
+              const itemCard = document.querySelector(`.wishlist-card[data-product-id="${productId}"]`);
+              if (itemCard) {
+                itemCard.style.opacity = "1";
+                itemCard.style.transform = "scale(1)";
+              }
+              
+              showToast("Error", "Failed to remove item", "error");
+            });
+        }
+
+        function showToast(title, message, type = "success") {
+          const toastContainer =
+            document.querySelector(".toast-container") ||
+            (() => {
+              const container = document.createElement("div");
+              container.className = "toast-container";
+              document.body.appendChild(container);
+              return container;
+            })();
+
+          const toast = document.createElement("div");
+          toast.className = `toast ${type}`;
+
+          const toastContent = `
+            <div class="toast-icon">
+              <ion-icon name="${
+                type === "success" ? "checkmark-circle" : "alert-circle"
+              }"></ion-icon>
+            </div>
+            <div class="toast-content">
+              <div class="toast-title">${title}</div>
+              <div class="toast-message">${message}</div>
+            </div>
+            <button class="toast-close" onclick="this.parentElement.remove()">
+              <ion-icon name="close"></ion-icon>
+            </button>
+          `;
+
+          toast.innerHTML = toastContent;
+          toastContainer.appendChild(toast);
+
+          // Auto remove toast after 3 seconds
+          setTimeout(() => {
+            toast.style.opacity = "0";
+            setTimeout(() => {
+              toast.remove();
+            }, 300);
+          }, 3000);
+        }
+
+        // These functions should be defined elsewhere in your code, but including stubs for completeness
+        function updateCartCount(count) {
+          // Update the cart count in the UI
+          const cartCounts = document.querySelectorAll(".cart-count");
+          cartCounts.forEach((el) => {
+            el.textContent = count;
+          });
+          localStorage.setItem("cartCount", count);
+        }
+
+        function updateWishlistCount(count) {
+          // Update the wishlist count in the UI
+          const wishlistCounts = document.querySelectorAll(".wishlist-count");
+          wishlistCounts.forEach((el) => {
+            el.textContent = count;
+          });
+          localStorage.setItem("wishlistCount", count);
+        }
+
+        document.addEventListener(
+          "DOMContentLoaded",
+          fetchWishlistWithSessionFallback
+        );
+      </script>
+    </section>
+
+    <!-- Toast notification container -->
+    <div class="toast-container"></div>
+
+    <!-- Footer -->
+    <div th:replace="~{fragments/layout :: footer}"></div>
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+  </body>
+</html>

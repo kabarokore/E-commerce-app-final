@@ -1,0 +1,58 @@
+/* Counter styles - no animations (as requested) */
+
+.counter-update {
+  /* Animation removed */
+  background-color: var(--coffee-accent);
+}
+
+.cart-counter-update {
+  /* Animation removed */
+  background-color: var(--coffee-accent);
+}
+
+/* Base Counter Styling */
+.count {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: var(--coffee-accent);
+  color: white;
+  border-radius: 50%;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  z-index: 100;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  /* Transition removed */
+}
+
+/* Mobile-specific counter styling */
+.mobile-bottom-navigation .count {
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  font-size: 10px;
+}
+
+/* Wishlist counter specific */
+.wishlist-counter {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: var(--coffee-accent);
+  color: white;
+  border-radius: 50%;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  z-index: 100;
+}

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head th:replace="~{fragments/layout :: head(title='About Us')}">
+    <title>About Us</title>
+  </head>
+
+  <body>
+    <div th:replace="~{fragments/layout :: navbar}"></div>
+    <div th:replace="~{fragments/layout :: page-title('About Us')}"></div>
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+
+    <main class="shop-page-container">
+      <div class="about-us-content">
+        <section class="about-section">
+          <div class="container">
+            <div class="about-header">
+              <h2>Our Story</h2>
+              <div class="section-divider"></div>
+            </div>
+            <div class="about-story">
+              <div class="about-image">
+                <img
+                  src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600&auto=format&fit=crop"
+                  alt="The Daily Grind Coffee Shop"
+                />
+              </div>
+              <div class="about-text">
+                <p>
+                  The Daily Grind was founded in 2010 with a simple mission: to
+                  share our passion for exceptional coffee with the world. What
+                  started as a small café in downtown has grown into a community
+                  of coffee enthusiasts and a home for those who appreciate the
+                  art and science behind the perfect cup.
+                </p>
+                <p>
+                  Our journey began when our founder, Emma Bennett, returned
+                  from traveling across the major coffee regions of the world.
+                  Inspired by the diverse flavors and brewing methods she
+                  encountered, Emma wanted to create a space where people could
+                  experience coffee in its purest form while learning about its
+                  origins and production.
+                </p>
+                <p>
+                  Today, The Daily Grind stands as a testament to our unwavering
+                  commitment to quality, sustainability, and the joy of sharing
+                  great coffee.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="values-section">
+          <div class="container">
+            <div class="about-header">
+              <h2>Our Values</h2>
+              <div class="section-divider"></div>
+            </div>
+            <div class="values-grid">
+              <div class="value-card">
+                <ion-icon name="leaf-outline"></ion-icon>
+                <h3>Sustainability</h3>
+                <p>
+                  We source our beans through direct trade relationships with
+                  farmers who practice sustainable agriculture and receive fair
+                  compensation for their work.
+                </p>
+              </div>
+              <div class="value-card">
+                <ion-icon name="ribbon-outline"></ion-icon>
+                <h3>Quality</h3>
+                <p>
+                  We meticulously select, roast, and brew our coffee to ensure
+                  that every cup meets our exacting standards of excellence.
+                </p>
+              </div>
+              <div class="value-card">
+                <ion-icon name="people-outline"></ion-icon>
+                <h3>Community</h3>
+                <p>
+                  We believe coffee brings people together. Our spaces are
+                  designed to foster connection and conversation.
+                </p>
+              </div>
+              <div class="value-card">
+                <ion-icon name="school-outline"></ion-icon>
+                <h3>Education</h3>
+                <p>
+                  We're committed to sharing our knowledge about coffee, from
+                  bean to cup, empowering customers to brew perfectly at home.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="team-section">
+          <div class="container">
+            <div class="about-header">
+              <h2>Meet Our Team</h2>
+              <div class="section-divider"></div>
+            </div>
+            <div class="team-grid">
+              <div class="team-member">
+                <div class="member-image">
+                  <img
+                    src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=300&auto=format&fit=crop"
+                    alt="Emma Bennett"
+                  />
+                </div>
+                <h3>Emma Bennett</h3>
+                <p class="member-title">Founder & Head Roaster</p>
+                <p>
+                  Emma's decade of experience across four continents brings
+                  authentic global coffee culture to every blend we create.
+                </p>
+              </div>
+              <div class="team-member">
+                <div class="member-image">
+                  <img
+                    src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop"
+                    alt="Daniel Rodriguez"
+                  />
+                </div>
+                <h3>Daniel Rodriguez</h3>
+                <p class="member-title">Master Barista</p>
+                <p>
+                  With championship titles under his belt, Daniel ensures our
+                  brewing techniques highlight the unique profile of each
+                  coffee.
+                </p>
+              </div>
+              <div class="team-member">
+                <div class="member-image">
+                  <img
+                    src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=300&auto=format&fit=crop"
+                    alt="Sarah Chen"
+                  />
+                </div>
+                <h3>Sarah Chen</h3>
+                <p class="member-title">Sustainability Director</p>
+                <p>
+                  Sarah's background in environmental science guides our
+                  commitment to ethical sourcing and eco-friendly practices.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="visit-section">
+          <div class="container">
+            <div class="about-header">
+              <h2>Visit Our Store</h2>
+              <div class="section-divider"></div>
+            </div>
+            <div class="store-info">
+              <div class="store-details">
+                <div class="info-group">
+                  <ion-icon name="location-outline"></ion-icon>
+                  <div>
+                    <h4>Address</h4>
+                    <p>123 Coffee Street<br />Portland, OR 97204</p>
+                  </div>
+                </div>
+                <div class="info-group">
+                  <ion-icon name="time-outline"></ion-icon>
+                  <div>
+                    <h4>Hours</h4>
+                    <p>
+                      Monday - Friday: 6am - 8pm<br />Saturday - Sunday: 7am -
+                      9pm
+                    </p>
+                  </div>
+                </div>
+                <div class="info-group">
+                  <ion-icon name="call-outline"></ion-icon>
+                  <div>
+                    <h4>Contact</h4>
+                    <p>Phone: (555) 123-4567<br />Email: info@dailygrind.com</p>
+                  </div>
+                </div>
+              </div>
+              <div class="store-map">
+                <img
+                  src="https://images.unsplash.com/photo-1526778548025-fa2f459cd5ce?w=600&auto=format&fit=crop"
+                  alt="Store Location Map"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <div th:replace="~{fragments/layout :: footer}"></div>
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+  </body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/layout :: head('Register')}">
+    <title>Register</title>
+    <!-- Using global CSS since the head fragment doesn't support links parameter -->
+  </head>
+  <body>
+    <nav th:replace="~{fragments/layout :: navbar}"></nav>
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+
+    <div class="register-form">
+      <h2 class="register-title">Create Your Account</h2>
+      <form
+        th:action="@{/register}"
+        th:object="${user}"
+        method="post"
+        class="auth-form"
+      >
+        <div class="form-row">
+          <div class="form-group">
+            <label for="firstName" class="form-label">First Name</label>
+            <input
+              type="text"
+              class="form-control"
+              id="firstName"
+              th:field="*{firstName}"
+              placeholder="Enter your first name"
+              required
+            />
+            <div class="form-icon">
+              <ion-icon name="person-outline"></ion-icon>
+            </div>
+            <div
+              class="text-danger"
+              th:if="${#fields.hasErrors('firstName')}"
+              th:errors="*{firstName}"
+            ></div>
+          </div>
+          <div class="form-group">
+            <label for="lastName" class="form-label">Last Name</label>
+            <input
+              type="text"
+              class="form-control"
+              id="lastName"
+              th:field="*{lastName}"
+              placeholder="Enter your last name"
+              required
+            />
+            <div class="form-icon">
+              <ion-icon name="person-outline"></ion-icon>
+            </div>
+            <div
+              class="text-danger"
+              th:if="${#fields.hasErrors('lastName')}"
+              th:errors="*{lastName}"
+            ></div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="username" class="form-label">Username</label>
+          <input
+            type="text"
+            class="form-control"
+            id="username"
+            th:field="*{username}"
+            placeholder="Choose a username"
+            required
+          />
+          <div class="form-icon">
+            <ion-icon name="person-outline"></ion-icon>
+          </div>
+          <div
+            class="text-danger"
+            th:if="${#fields.hasErrors('username')}"
+            th:errors="*{username}"
+          ></div>
+        </div>
+
+        <div class="form-group">
+          <label for="email" class="form-label">Email</label>
+          <input
+            type="email"
+            class="form-control"
+            id="email"
+            th:field="*{email}"
+            placeholder="Enter your email address"
+            required
+          />
+          <div class="form-icon">
+            <ion-icon name="mail-outline"></ion-icon>
+          </div>
+          <div
+            class="text-danger"
+            th:if="${#fields.hasErrors('email')}"
+            th:errors="*{email}"
+          ></div>
+        </div>
+
+        <div class="form-group">
+          <label for="password" class="form-label">Password</label>
+          <input
+            type="password"
+            class="form-control"
+            id="password"
+            th:field="*{password}"
+            placeholder="Create a password"
+            required
+          />
+          <div class="form-icon">
+            <ion-icon name="lock-closed-outline"></ion-icon>
+          </div>
+          <div
+            class="text-danger"
+            th:if="${#fields.hasErrors('password')}"
+            th:errors="*{password}"
+          ></div>
+        </div>
+
+        <!-- Address field removed as it's not part of the initial registration -->
+        <!-- Users can add addresses after registration in their profile -->
+
+        <div class="form-group">
+          <label for="phoneNumber" class="form-label">Phone Number</label>
+          <input
+            type="text"
+            class="form-control"
+            id="phoneNumber"
+            th:field="*{phoneNumber}"
+            placeholder="Enter your phone number"
+          />
+          <div class="form-icon">
+            <ion-icon name="call-outline"></ion-icon>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <button type="submit" class="auth-btn">
+            <ion-icon name="person-add-outline"></ion-icon> Create Account
+          </button>
+        </div>
+      </form>
+
+      <div class="auth-footer">
+        <p>Already have an account? <a th:href="@{/login}">Login here</a></p>
+      </div>
+    </div>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+  </body>
+</html>
